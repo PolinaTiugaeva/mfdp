@@ -29,7 +29,7 @@ def startBot(message):
     bot.send_message(message.chat.id, first_mess, parse_mode='html')
 
 @bot.message_handler(func=lambda message: True)
-def echo_message(message):
+def game_searching(message):
     result = collection.query(
         query_texts=[message.text]
     )
