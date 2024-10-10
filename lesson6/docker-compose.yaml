@@ -1,0 +1,30 @@
+version: "3"
+services:
+  app:
+    build: ./app/
+    image: ml-service
+    env_file:
+      - ./app/.env
+    volumes:
+      - ./app:/app
+
+  #dataloader:
+  #  build: ./dataloader/
+  #  image: dataloader
+  #  volumes:
+  #    - ./dataloader:/dataloader
+
+  chromadb:
+    image: chromadb/chroma:0.5.11
+    volumes:
+      - ./chromadb:/chroma/chroma
+    environment:
+      - IS_PRESISTANT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
+    ports:
+      - 8000:8000
+
+volumes:
+  db_data:
+
+   
