@@ -5,3 +5,9 @@ watchdog
 psutil
 aiohttp
 pandas
+loguru
+dependency_injector
+sqlmodel
+sqlalchemy
+psycopg
+psycopg-binary

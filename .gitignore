@@ -1,3 +1,6 @@
 games_metadata_new2.json
 lesson4/
 lesson6/app/.env
+lesson6/.env
+recsys.pkl
+lesson6/app/database/__pycache__/
