@@ -1,12 +1,14 @@
 import os
+import pika
 import json
-import pandas as pd
 import telebot
+
 from dotenv import load_dotenv
 from loguru import logger
 from telebot.util import quick_markup
+
 from database.containers import Container
-from database.database import get_collection, get_session, init_db
+from database.database import get_session, init_db, get_chanel
 from models.history import History
 from services.crud.history import add_to_history
 
@@ -20,33 +22,37 @@ if os.path.exists(dotenv_path):
 bot_token = os.environ['BOT_TOKEN']
 bot = telebot.TeleBot(bot_token)
 
-df_games = pd.read_csv('games.csv')
-
 @bot.message_handler(commands=['start', 'help'])
 def startBot(message):
     first_mess = f"Привет, {message.from_user.first_name}!\nОпиши игру, в которую хотелось бы поиграть и я найду её!"
+    logger.info(message.chat.id)
+    logger.info(message)
     bot.send_message(message.chat.id, first_mess, parse_mode='html')
 
-
 @bot.message_handler(func=lambda message: True)
-def game_searching(message):
-    collection = get_collection()
-    result = collection.query(
-        query_texts=[message.text]
+def game_searching_req(message):
+    logger.info(f'message - {message}')
+    body = json.dumps({
+        'username' : message.from_user.username,
+        'chat_id' : message.chat.id,
+        'text' : message.text
+    })
+    logger.info(f'body - {body}')
+    chanel = get_chanel()
+    chanel.basic_publish(
+        exchange='',
+        routing_key='search_request',
+        body=body,
+        properties=pika.BasicProperties(
+            delivery_mode=2
+        )
     )
-    markup = quick_markup({
-        '\U0001F44D': {'callback_data': "1"},
-        '\U0001F44E': {'callback_data': "0"}
-    }, row_width=2)
-    ids = result['ids'][0]
-    for game_id in ids:
-        title = df_games[df_games['app_id'] == int(game_id)]['title'].astype(str).values[0]
-        bot.send_message(message.chat.id, title, reply_markup=markup)
-
+    chanel.basic_ack()
 
 
 @bot.callback_query_handler(func=lambda call: True)
 def reaction_callback(call): 
+    logger.info("!!!!!!!!!!!!!!!!!!!!!!!!")
     session = get_session()
     new_item = History(
         username = call.from_user.username,

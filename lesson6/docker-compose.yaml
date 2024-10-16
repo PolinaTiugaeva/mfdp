@@ -7,6 +7,66 @@ services:
       - ./app/.env
     volumes:
       - ./app:/app
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  search:
+    build: ./search/
+    image: search
+    env_file:
+      - ./search/.env
+    volumes:
+      - ./search:/search
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  sort:
+    build: ./sort/
+    image: sort
+    env_file:
+      - ./sort/.env
+    volumes:
+      - ./sort:/sort
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  notifier:
+    build: ./notifier/
+    image: notifier
+    env_file:
+      - ./notifier/.env
+    volumes:
+      - ./notifier:/notifier
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  rabbitmq:
+    image: rabbitmq:3.13.1-management
+    hostname: rabbitmq
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_USER=rmuser
+      - RABBITMQ_DEFAULT_PASS=rmpassword
+    ports:
+      - 15672:15672
+      - 5672:5672
+    volumes:
+      - ./rabbitmq:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   #dataloader:
   #  build: ./dataloader/
